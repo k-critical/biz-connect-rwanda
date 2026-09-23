@@ -17,7 +17,12 @@
     "test:watch": "vitest",
     "check": "npm run lint && npm run typecheck && npm run format:check && npm run test",
     "db:setup": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-local-db.ps1",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "prisma db seed",
+    "db:studio": "prisma studio",
+    "db:wipe-demo": "tsx prisma/wipe-demo.ts",
     "mail": "mailpit",
+    "postinstall": "prisma generate",
     "prepare": "husky"
   },
   "lint-staged": {
@@ -28,6 +33,9 @@
     "*.{json,md,css,yml,yaml}": "prettier --write"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "dotenv": "^18.0.3",
     "lucide-react": "^1.47.0",
     "next": "16.3.6",
     "pg": "^8.23.0",
@@ -49,7 +57,9 @@
     "lint-staged": "^17.5.1",
     "prettier": "^3.9.9",
     "prettier-plugin-tailwindcss": "^0.8.1",
+    "prisma": "^7.10.0",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^5.0.1"
   }
