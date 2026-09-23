@@ -25,6 +25,10 @@
     "postinstall": "prisma generate",
     "prepare": "husky"
   },
+  "overrides": {
+    "deepmerge-ts": "^8.0.2",
+    "mysql2": "^3.24.4"
+  },
   "lint-staged": {
     "*.{ts,tsx,js,mjs,cjs}": [
       "eslint --fix",

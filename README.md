@@ -82,6 +82,11 @@ that needs it.
 `.env` to your own number. Before launch, remove them all with `npm run db:wipe-demo`; real
 businesses are never touched.
 
+**Dependency overrides.** `package.json` forces patched versions of `deepmerge-ts` and `mysql2`.
+Both come only through the `prisma` command-line tool, which pins older versions with known
+security advisories. Remove the overrides once a stable Prisma release depends on fixed versions
+(check with `npm audit --omit=dev`).
+
 ## Scripts
 
 | Command                | What it does                                                   |
