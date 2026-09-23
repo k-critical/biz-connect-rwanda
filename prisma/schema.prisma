@@ -1,0 +1,175 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  VISITOR
+  OWNER
+  ADMIN
+}
+
+/// Only APPROVED businesses are ever shown publicly.
+enum BusinessStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+model User {
+  id         String     @id @default(uuid(7)) @db.Uuid
+  email      String     @unique
+  name       String?
+  phone      String?
+  role       Role       @default(VISITOR)
+  isDemo     Boolean    @default(false) @map("is_demo")
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @updatedAt @map("updated_at")
+  businesses Business[]
+
+  @@map("users")
+}
+
+model Province {
+  id        Int        @id @default(autoincrement())
+  slug      String     @unique
+  name      String     @unique
+  districts District[]
+
+  @@map("provinces")
+}
+
+model District {
+  id         Int        @id @default(autoincrement())
+  slug       String     @unique
+  name       String     @unique
+  provinceId Int        @map("province_id")
+  province   Province   @relation(fields: [provinceId], references: [id], onDelete: Restrict)
+  businesses Business[]
+
+  @@index([provinceId])
+  @@map("districts")
+}
+
+model Category {
+  id         Int                @id @default(autoincrement())
+  slug       String             @unique
+  name       String
+  sortOrder  Int                @map("sort_order")
+  businesses BusinessCategory[]
+
+  @@map("categories")
+}
+
+model Business {
+  id               String             @id @default(uuid(7)) @db.Uuid
+  slug             String             @unique
+  name             String
+  tagline          String
+  description      String
+  status           BusinessStatus     @default(DRAFT)
+  isFeatured       Boolean            @default(false) @map("is_featured")
+  isDemo           Boolean            @default(false) @map("is_demo")
+  districtId       Int                @map("district_id")
+  district         District           @relation(fields: [districtId], references: [id], onDelete: Restrict)
+  sector           String?
+  address          String?
+  latitude         Decimal?           @db.Decimal(9, 6)
+  longitude        Decimal?           @db.Decimal(9, 6)
+  phone            String?
+  whatsapp         String?
+  email            String?
+  website          String?
+  facebookUrl      String?            @map("facebook_url")
+  instagramUrl     String?            @map("instagram_url")
+  /// 1 = budget, 2 = mid-range, 3 = upscale
+  priceLevel       Int?               @map("price_level") @db.SmallInt
+  ownerId          String?            @map("owner_id") @db.Uuid
+  owner            User?              @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+  categories       BusinessCategory[]
+  openingHours     OpeningHours[]
+  photos           Photo[]
+  showcaseSections ShowcaseSection[]
+
+  @@index([status, districtId])
+  @@index([ownerId])
+  @@map("businesses")
+}
+
+model BusinessCategory {
+  businessId String   @map("business_id") @db.Uuid
+  categoryId Int      @map("category_id")
+  /// 0 is the business's main category, shown on its card.
+  position   Int      @db.SmallInt
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@id([businessId, categoryId])
+  @@unique([businessId, position])
+  @@index([categoryId])
+  @@map("business_categories")
+}
+
+/// One row per opening period; a day with no rows is a closed day. Times are minutes after
+/// midnight in Africa/Kigali. A period that runs past midnight has closesAt <= opensAt.
+model OpeningHours {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  businessId String   @map("business_id") @db.Uuid
+  /// ISO weekday: 1 = Monday … 7 = Sunday
+  dayOfWeek  Int      @map("day_of_week") @db.SmallInt
+  opensAt    Int      @map("opens_at") @db.SmallInt
+  closesAt   Int      @map("closes_at") @db.SmallInt
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, dayOfWeek])
+  @@map("opening_hours")
+}
+
+model Photo {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  businessId String   @map("business_id") @db.Uuid
+  storageKey String   @map("storage_key")
+  width      Int
+  height     Int
+  altText    String   @map("alt_text")
+  position   Int      @db.SmallInt
+  createdAt  DateTime @default(now()) @map("created_at")
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, position])
+  @@map("photos")
+}
+
+/// A group on the profile page, e.g. "Mains" on a menu or "Rooms" at a guesthouse.
+model ShowcaseSection {
+  id         String         @id @default(uuid(7)) @db.Uuid
+  businessId String         @map("business_id") @db.Uuid
+  title      String
+  position   Int            @db.SmallInt
+  business   Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  items      ShowcaseItem[]
+
+  @@index([businessId, position])
+  @@map("showcase_sections")
+}
+
+model ShowcaseItem {
+  id          String          @id @default(uuid(7)) @db.Uuid
+  sectionId   String          @map("section_id") @db.Uuid
+  name        String
+  description String?
+  priceRwf    Int?            @map("price_rwf")
+  position    Int             @db.SmallInt
+  section     ShowcaseSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@index([sectionId, position])
+  @@map("showcase_items")
+}
