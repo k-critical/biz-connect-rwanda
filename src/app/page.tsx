@@ -1,16 +1,27 @@
+import { ImigongoPattern } from "@/components/brand/imigongo-pattern";
+import { ButtonLink } from "@/components/ui/button";
+
 export default function Home() {
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-24 text-center">
-      <p className="text-xs font-semibold tracking-[0.2em] text-neutral-500 uppercase">
-        Milestone 0 · Foundations
-      </p>
-      <h1 className="text-4xl font-bold">BizConnect Rwanda</h1>
-      <p className="max-w-md text-neutral-600 dark:text-neutral-400">
-        The foundations are in place. The real design arrives in Milestone 1.
-      </p>
-      <a className="font-medium underline underline-offset-4" href="/api/health">
-        Check system health
-      </a>
-    </main>
+    <section className="relative flex flex-1 items-center overflow-hidden">
+      <ImigongoPattern className="absolute top-0 right-0 hidden h-full w-40 text-surface-2 lg:block" />
+      <div className="relative mx-auto flex w-full max-w-6xl flex-col items-start gap-5 px-4 py-24 sm:px-6">
+        <p className="text-xs font-bold tracking-[0.2em] text-primary uppercase">
+          Milestone 1 · Design system
+        </p>
+        <h1 className="max-w-2xl text-4xl font-bold sm:text-5xl">
+          Every local business, one tap away.
+        </h1>
+        <p className="max-w-xl text-lg text-ink-muted">
+          The look and building blocks are ready. Real listings arrive with the public directory in
+          Milestone 3.
+        </p>
+        {process.env.NODE_ENV !== "production" && (
+          <ButtonLink href="/styleguide" variant="secondary">
+            Open the style guide
+          </ButtonLink>
+        )}
+      </div>
+    </section>
   );
 }
