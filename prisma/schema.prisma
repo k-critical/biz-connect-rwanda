@@ -101,6 +101,7 @@ model Business {
 
   @@index([status, districtId])
   @@index([ownerId])
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "businesses_name_trgm_idx")
   @@map("businesses")
 }
 

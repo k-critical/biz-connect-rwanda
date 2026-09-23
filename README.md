@@ -4,7 +4,8 @@ A discovery platform for small businesses in Rwanda: visitors find a business an
 directly on WhatsApp, by phone or by email; owners keep their listing up to date; admins review
 what gets published.
 
-Status: **Milestone 2 (database)**. Public directory pages arrive in Milestone 3.
+Status: **Milestone 3 (public directory)**: home page, explore with search and filters, category
+pages and business profiles. Accounts and the listing wizard arrive in Milestones 4 and 5.
 
 ## Tech stack
 
@@ -97,7 +98,7 @@ security advisories. Remove the overrides once a stable Prisma release depends o
 | `npm run lint`         | ESLint                                                         |
 | `npm run typecheck`    | Generate route types, then run the TypeScript compiler         |
 | `npm run format`       | Format every file with Prettier                                |
-| `npm test`             | Run the unit tests once (`npm run test:watch` to keep going)   |
+| `npm test`             | Run all tests once (`npm run test:watch` to keep going)        |
 | `npm run db:setup`     | Create the local database and write `DATABASE_URL` to `.env`   |
 | `npm run db:migrate`   | Apply migrations, or create a new one after a schema change    |
 | `npm run db:seed`      | Add categories, locations and demo businesses (safe to re-run) |
@@ -106,9 +107,20 @@ security advisories. Remove the overrides once a stable Prisma release depends o
 | `npm run mail`         | Start Mailpit                                                  |
 
 A pre-commit hook runs ESLint and Prettier on the files you're committing. On every pull request,
-GitHub Actions runs lint, type-check, formatting and tests, builds a fresh PostgreSQL database
-from the migrations, seeds it twice, checks the schema and migrations match, builds the app and
-runs `npm audit`.
+GitHub Actions runs lint, type-check and formatting, builds a fresh PostgreSQL database from the
+migrations, seeds it twice, checks the schema and migrations match, runs the tests, builds the app
+and runs `npm audit`.
+
+**Tests.** Most tests are plain unit tests. `src/server/services/directory-service.test.ts` runs
+against your local database and expects the demo data, so run `npm run db:seed` first; it checks
+search, filters, and that "open now" gives the same answer in SQL and in TypeScript.
+
+## Search
+
+Search combines PostgreSQL full-text search (over the name, description, sector, district and
+category) with `pg_trgm` trigram matching on the name, so "hotel Musanze" and misspellings like
+"Lakside" both work. Filters live in the URL (`/explore?q=…&category=…&district=…&price=…&open=1`),
+so results can be shared and the back button works.
 
 ## Project layout
 
@@ -121,6 +133,7 @@ src/
   app/                 routes and UI (pages, layouts, API route handlers)
   components/          UI building blocks (see /styleguide in development)
   config/              settings, categories and site navigation
+  lib/                 pure helpers: opening hours, URL filters, formatting, safe links
   server/
     services/          business rules
     repositories/      the only place that talks to the database
