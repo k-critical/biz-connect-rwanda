@@ -13,6 +13,10 @@ export const categories = [
 export type Category = (typeof categories)[number];
 export type CategorySlug = Category["slug"];
 
+export function isCategorySlug(value: string): value is CategorySlug {
+  return categories.some((c) => c.slug === value);
+}
+
 export function getCategory(slug: CategorySlug): Category {
   const category = categories.find((c) => c.slug === slug);
   if (!category) throw new Error(`Unknown category: ${slug}`);

@@ -25,7 +25,7 @@ export function BusinessCard({ business }: { business: BusinessCardData }) {
   const category = getCategory(business.categorySlug);
 
   return (
-    <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-card transition-shadow hover:shadow-lift">
+    <article className="group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-card transition-shadow hover:shadow-lift">
       <div className="relative aspect-[4/3] overflow-hidden bg-surface-2">
         {business.photoUrl ? (
           <Image
