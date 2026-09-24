@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { CircleUserRound, Menu, X } from "lucide-react";
 import type { NavItem } from "@/config/site";
 import { ButtonLink } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
@@ -12,7 +12,13 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function SiteNav({ items }: { items: NavItem[] }) {
+export function SiteNav({
+  items,
+  viewer,
+}: {
+  items: NavItem[];
+  viewer: { firstName: string } | null;
+}) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const panelId = useId();
@@ -41,9 +47,17 @@ export function SiteNav({ items }: { items: NavItem[] }) {
             {item.label}
           </Link>
         ))}
-        <ButtonLink href="/login" variant="ghost" size="sm" className="ml-2">
-          Sign in
-        </ButtonLink>
+        {viewer ? (
+          <ButtonLink href="/account" variant="ghost" size="sm" className="ml-2">
+            <CircleUserRound aria-hidden />
+            {viewer.firstName}
+            <span className="sr-only">, your account</span>
+          </ButtonLink>
+        ) : (
+          <ButtonLink href="/login" variant="ghost" size="sm" className="ml-2">
+            Sign in
+          </ButtonLink>
+        )}
         <ButtonLink href="/list-your-business" size="sm">
           List your business
         </ButtonLink>
@@ -81,9 +95,16 @@ export function SiteNav({ items }: { items: NavItem[] }) {
             </Link>
           ))}
           <div className="mt-2 grid grid-cols-2 gap-2 border-t border-border pt-4">
-            <ButtonLink href="/login" variant="secondary" onClick={close}>
-              Sign in
-            </ButtonLink>
+            {viewer ? (
+              <ButtonLink href="/account" variant="secondary" onClick={close}>
+                <CircleUserRound aria-hidden />
+                Your account
+              </ButtonLink>
+            ) : (
+              <ButtonLink href="/login" variant="secondary" onClick={close}>
+                Sign in
+              </ButtonLink>
+            )}
             <ButtonLink href="/list-your-business" onClick={close}>
               List your business
             </ButtonLink>

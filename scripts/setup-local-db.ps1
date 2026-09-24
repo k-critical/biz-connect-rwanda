@@ -48,5 +48,7 @@ $lines = @(Get-Content $source | ForEach-Object {
 if (-not $found) { $lines += "DATABASE_URL=$url" }
 [System.IO.File]::WriteAllText($envPath, ($lines -join "`n") + "`n", (New-Object System.Text.UTF8Encoding $false))
 
+node (Join-Path $PSScriptRoot "sync-env.mjs")
+
 Write-Host ""
 Write-Host "Done. The 'bizconnect' database is ready and DATABASE_URL is saved in .env." -ForegroundColor Green
