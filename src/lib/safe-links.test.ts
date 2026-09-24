@@ -1,5 +1,26 @@
 import { describe, expect, it } from "vitest";
-import { displayHost, safeExternalUrl, telHref } from "./safe-links";
+import { displayHost, safeExternalUrl, safeNextPath, telHref } from "./safe-links";
+
+describe("safeNextPath", () => {
+  it("keeps paths on this site", () => {
+    expect(safeNextPath("/admin")).toBe("/admin");
+    expect(safeNextPath("/explore?q=grill#results")).toBe("/explore?q=grill#results");
+  });
+
+  it("refuses anything that could leave the site", () => {
+    for (const value of [
+      "https://evil.example",
+      "//evil.example",
+      "/\\evil.example",
+      "javascript:alert(1)",
+      "admin",
+      "",
+      null,
+    ]) {
+      expect(safeNextPath(value), String(value)).toBe("/account");
+    }
+  });
+});
 
 describe("safeExternalUrl", () => {
   it("allows ordinary web links", () => {

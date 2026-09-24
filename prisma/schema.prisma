@@ -23,17 +23,81 @@ enum BusinessStatus {
 }
 
 model User {
-  id         String     @id @default(uuid(7)) @db.Uuid
-  email      String     @unique
-  name       String?
-  phone      String?
-  role       Role       @default(VISITOR)
-  isDemo     Boolean    @default(false) @map("is_demo")
-  createdAt  DateTime   @default(now()) @map("created_at")
-  updatedAt  DateTime   @updatedAt @map("updated_at")
-  businesses Business[]
+  id            String     @id @default(uuid(7)) @db.Uuid
+  email         String     @unique
+  emailVerified Boolean    @default(false) @map("email_verified")
+  name          String
+  image         String?
+  phone         String?
+  role          Role       @default(VISITOR)
+  isDemo        Boolean    @default(false) @map("is_demo")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+  businesses    Business[]
+  sessions      Session[]
+  accounts      Account[]
 
   @@map("users")
+}
+
+/// A signed-in browser. Managed by Better Auth; the cookie holds `token`.
+model Session {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+/// A way to sign in. For email and password, providerId is "credential" and `password`
+/// holds the Argon2id hash.
+model Account {
+  id                    String    @id @default(uuid(7)) @db.Uuid
+  userId                String    @map("user_id") @db.Uuid
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  password              String?
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  scope                 String?
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("accounts")
+}
+
+/// Short-lived tokens for email verification and password resets.
+model Verification {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  identifier String
+  value      String
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([identifier])
+  @@map("verifications")
+}
+
+model RateLimit {
+  id          String @id @default(uuid(7)) @db.Uuid
+  key         String @unique
+  count       Int
+  lastRequest BigInt @map("last_request")
+
+  @@map("rate_limits")
 }
 
 model Province {

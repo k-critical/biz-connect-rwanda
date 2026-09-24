@@ -26,7 +26,9 @@ jobs:
       DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
       SMTP_HOST: localhost
       SMTP_PORT: "1025"
+      MAIL_FROM: BizConnect CI <ci@bizconnect.local>
       NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      BETTER_AUTH_SECRET: ci-only-secret-not-used-anywhere-else-0000
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5

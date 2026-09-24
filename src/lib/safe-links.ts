@@ -9,6 +9,23 @@ export function safeExternalUrl(url: string | null | undefined): string | null {
   }
 }
 
+/**
+ * A `?next=` return path that stays on this site. Anything that could send someone to
+ * another site after signing in (e.g. `//evil.example`) falls back to the default.
+ */
+export function safeNextPath(value: string | null | undefined, fallback = "/account"): string {
+  if (!value || !value.startsWith("/") || value.startsWith("//") || value.includes("\\")) {
+    return fallback;
+  }
+  try {
+    const url = new URL(value, "http://internal.invalid");
+    if (url.origin !== "http://internal.invalid") return fallback;
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return fallback;
+  }
+}
+
 export function telHref(phone: string): string {
   return `tel:${phone.replace(/[^\d+]/g, "")}`;
 }

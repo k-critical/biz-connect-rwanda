@@ -17,10 +17,12 @@
     "test:watch": "vitest",
     "check": "npm run lint && npm run typecheck && npm run format:check && npm run test",
     "db:setup": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-local-db.ps1",
-    "db:migrate": "prisma migrate dev",
+    "db:migrate": "prisma migrate dev && prisma generate",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "db:wipe-demo": "tsx prisma/wipe-demo.ts",
+    "env:sync": "node scripts/sync-env.mjs",
+    "user:make-admin": "tsx scripts/make-admin.ts",
     "mail": "mailpit",
     "postinstall": "prisma generate",
     "prepare": "husky"
@@ -37,11 +39,14 @@
     "*.{json,md,css,yml,yaml}": "prettier --write"
   },
   "dependencies": {
+    "@node-rs/argon2": "^2.2.1",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
+    "better-auth": "^1.7.5",
     "dotenv": "^18.0.3",
     "lucide-react": "^1.47.0",
     "next": "16.3.6",
+    "nodemailer": "^10.0.10",
     "pg": "^8.23.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
@@ -51,6 +56,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^24.13.6",
+    "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",

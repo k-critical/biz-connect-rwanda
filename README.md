@@ -4,13 +4,14 @@ A discovery platform for small businesses in Rwanda: visitors find a business an
 directly on WhatsApp, by phone or by email; owners keep their listing up to date; admins review
 what gets published.
 
-Status: **Milestone 3 (public directory)**: home page, explore with search and filters, category
-pages and business profiles. Accounts and the listing wizard arrive in Milestones 4 and 5.
+Status: **Milestone 4 (accounts)**: public directory plus registration, email confirmation,
+sign-in, password reset and roles. The listing wizard arrives in Milestone 5.
 
 ## Tech stack
 
-Next.js 16 (App Router) · TypeScript (strict) · Tailwind CSS 4 · PostgreSQL 16 · Prisma 7 · Zod ·
-Vitest · ESLint + Prettier · GitHub Actions. Auth.js and pg-boss arrive in later milestones.
+Next.js 16 (App Router) · TypeScript (strict) · Tailwind CSS 4 · PostgreSQL 16 · Prisma 7 ·
+Better Auth (Argon2id passwords) · Nodemailer · Zod · Vitest · ESLint + Prettier · GitHub Actions.
+pg-boss arrives in a later milestone.
 
 ## Local setup (Windows)
 
@@ -90,30 +91,59 @@ security advisories. Remove the overrides once a stable Prisma release depends o
 
 ## Scripts
 
-| Command                | What it does                                                   |
-| ---------------------- | -------------------------------------------------------------- |
-| `npm run dev`          | Start the development server on port 3000                      |
-| `npm run build`        | Production build                                               |
-| `npm run check`        | Lint, type-check, formatting check and tests, all at once      |
-| `npm run lint`         | ESLint                                                         |
-| `npm run typecheck`    | Generate route types, then run the TypeScript compiler         |
-| `npm run format`       | Format every file with Prettier                                |
-| `npm test`             | Run all tests once (`npm run test:watch` to keep going)        |
-| `npm run db:setup`     | Create the local database and write `DATABASE_URL` to `.env`   |
-| `npm run db:migrate`   | Apply migrations, or create a new one after a schema change    |
-| `npm run db:seed`      | Add categories, locations and demo businesses (safe to re-run) |
-| `npm run db:studio`    | Browse and edit the database in your web browser               |
-| `npm run db:wipe-demo` | Delete every demo business and demo user                       |
-| `npm run mail`         | Start Mailpit                                                  |
+| Command                            | What it does                                                   |
+| ---------------------------------- | -------------------------------------------------------------- |
+| `npm run dev`                      | Start the development server on port 3000                      |
+| `npm run build`                    | Production build                                               |
+| `npm run check`                    | Lint, type-check, formatting check and tests, all at once      |
+| `npm run lint`                     | ESLint                                                         |
+| `npm run typecheck`                | Generate route types, then run the TypeScript compiler         |
+| `npm run format`                   | Format every file with Prettier                                |
+| `npm test`                         | Run all tests once (`npm run test:watch` to keep going)        |
+| `npm run db:setup`                 | Create the local database and write `DATABASE_URL` to `.env`   |
+| `npm run db:migrate`               | Apply migrations, or create a new one after a schema change    |
+| `npm run db:seed`                  | Add categories, locations and demo businesses (safe to re-run) |
+| `npm run db:studio`                | Browse and edit the database in your web browser               |
+| `npm run db:wipe-demo`             | Delete every demo business and demo user                       |
+| `npm run env:sync`                 | Add settings missing from `.env` and generate the auth secret  |
+| `npm run user:make-admin -- email` | Give a confirmed account the admin role                        |
+| `npm run mail`                     | Start Mailpit                                                  |
 
 A pre-commit hook runs ESLint and Prettier on the files you're committing. On every pull request,
 GitHub Actions runs lint, type-check and formatting, builds a fresh PostgreSQL database from the
 migrations, seeds it twice, checks the schema and migrations match, runs the tests, builds the app
 and runs `npm audit`.
 
-**Tests.** Most tests are plain unit tests. `src/server/services/directory-service.test.ts` runs
-against your local database and expects the demo data, so run `npm run db:seed` first; it checks
-search, filters, and that "open now" gives the same answer in SQL and in TypeScript.
+**Tests.** Most tests are plain unit tests. Two files run against your local database:
+`src/server/services/directory-service.test.ts` expects the demo data (run `npm run db:seed`
+first) and checks search, filters and "open now"; `src/server/auth/auth.test.ts` runs the real
+sign-up, confirmation, sign-in, reset and rate-limit flows with emails captured in memory, using
+throwaway accounts it deletes afterwards.
+
+## Accounts
+
+Sign-in uses [Better Auth](https://www.better-auth.com/) with email and password:
+
+- Registering sends a confirmation email; nobody can sign in until they click it. Registering an
+  email that already has an account looks the same as a normal sign-up (and emails the real
+  owner), so the form can't be used to discover who has an account.
+- Passwords are hashed with Argon2id. Sessions live in the database and in httpOnly, SameSite
+  cookies; resetting a password signs out every other device.
+- Sign-in, sign-up, password-reset and confirmation-email requests are rate limited per IP.
+- Roles are `VISITOR` (default), `OWNER` and `ADMIN`. Nobody can choose their own role.
+
+**Creating the first admin.** There is no built-in admin account or password. Register normally,
+confirm your email, then run:
+
+```bash
+npm run user:make-admin -- you@example.com
+```
+
+`/admin` answers "not found" to everyone who isn't an admin.
+
+**New settings.** When a milestone adds settings to `.env.example`, run `npm run env:sync` to copy
+the missing ones into your `.env`. It also generates `BETTER_AUTH_SECRET` if it's empty, without
+printing it.
 
 ## Search
 
