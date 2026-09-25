@@ -3,6 +3,7 @@ import { categories, type CategorySlug } from "@/config/categories";
 import type { BusinessCardData } from "@/components/business/business-card";
 import type { ExploreFilters } from "@/lib/explore-params";
 import { formatRwf, priceLevelLabel } from "@/lib/format";
+import { photoSrc } from "@/lib/media";
 import { getOpenStatus, kigaliClock, weeklySchedule } from "@/lib/opening-hours";
 import {
   countPublishedByCategory,
@@ -15,6 +16,7 @@ import {
   listPublishedSlugs,
   searchPublishedBusinessIds,
   type BusinessCardRow,
+  type BusinessProfileRow,
 } from "@/server/repositories/business-repository";
 
 export const PAGE_SIZE = 12;
@@ -33,6 +35,9 @@ function toCard(row: BusinessCardRow, now: Date): BusinessCardData {
     tagline: row.tagline,
     categorySlug: toCategorySlug(row.categories[0]?.category.slug),
     location: [row.sector, row.district.name].filter(Boolean).join(", "),
+    photo: row.photos[0]
+      ? { src: photoSrc(row.photos[0].storageKey), blurDataUrl: row.photos[0].blurDataUrl }
+      : null,
     isOpenNow: status.state === "unknown" ? null : status.state === "open",
     whatsappNumber: row.whatsapp,
   };
@@ -80,6 +85,59 @@ export async function getSitemapBusinesses() {
   return listPublishedSlugs();
 }
 
+/** Shapes a business for its profile page (public, or the owner's preview). */
+export function toBusinessProfile(b: BusinessProfileRow, now = new Date()) {
+  return {
+    slug: b.slug,
+    name: b.name,
+    tagline: b.tagline,
+    description: b.description,
+    sector: b.sector,
+    address: b.address,
+    district: { slug: b.district.slug, name: b.district.name },
+    province: b.district.province.name,
+    categories: b.categories.map((c) => ({
+      slug: toCategorySlug(c.category.slug),
+      name: c.category.name,
+    })),
+    priceLabel: priceLevelLabel(b.priceLevel),
+    contact: {
+      whatsapp: b.whatsapp,
+      phone: b.phone,
+      email: b.email,
+      website: b.website,
+      facebookUrl: b.facebookUrl,
+      instagramUrl: b.instagramUrl,
+    },
+    hours: b.openingHours,
+    status: getOpenStatus(b.openingHours, now),
+    schedule: weeklySchedule(b.openingHours),
+    today: kigaliClock(now).day,
+    showcase: b.showcaseSections.map((section) => ({
+      title: section.title,
+      items: section.items.map((item) => ({
+        name: item.name,
+        description: item.description,
+        price: item.priceRwf === null ? null : formatRwf(item.priceRwf),
+      })),
+    })),
+    latitude: b.latitude === null ? null : Number(b.latitude),
+    longitude: b.longitude === null ? null : Number(b.longitude),
+    photos: b.photos.map((photo) => ({
+      id: photo.id,
+      src: photoSrc(photo.storageKey),
+      blurDataUrl: photo.blurDataUrl,
+      alt: photo.altText,
+      width: photo.width,
+      height: photo.height,
+    })),
+    /** Nobody manages this listing yet, so its owner can ask to take it over. */
+    isClaimable: b.ownerId === null,
+  };
+}
+
+export type BusinessProfileData = ReturnType<typeof toBusinessProfile>;
+
 export async function getBusinessProfile(slug: string, now = new Date()) {
   const b = await findPublishedBusinessBySlug(slug);
   if (!b) return null;
@@ -94,43 +152,7 @@ export async function getBusinessProfile(slug: string, now = new Date()) {
   const relatedIds = new Set(sameCategory.map((r) => r.id));
 
   return {
-    business: {
-      slug: b.slug,
-      name: b.name,
-      tagline: b.tagline,
-      description: b.description,
-      sector: b.sector,
-      address: b.address,
-      district: { slug: b.district.slug, name: b.district.name },
-      province: b.district.province.name,
-      categories: b.categories.map((c) => ({
-        slug: toCategorySlug(c.category.slug),
-        name: c.category.name,
-      })),
-      priceLabel: priceLevelLabel(b.priceLevel),
-      contact: {
-        whatsapp: b.whatsapp,
-        phone: b.phone,
-        email: b.email,
-        website: b.website,
-        facebookUrl: b.facebookUrl,
-        instagramUrl: b.instagramUrl,
-      },
-      hours: b.openingHours,
-      status: getOpenStatus(b.openingHours, now),
-      schedule: weeklySchedule(b.openingHours),
-      today: kigaliClock(now).day,
-      showcase: b.showcaseSections.map((section) => ({
-        title: section.title,
-        items: section.items.map((item) => ({
-          name: item.name,
-          description: item.description,
-          price: item.priceRwf === null ? null : formatRwf(item.priceRwf),
-        })),
-      })),
-      latitude: b.latitude === null ? null : Number(b.latitude),
-      longitude: b.longitude === null ? null : Number(b.longitude),
-    },
+    business: toBusinessProfile(b, now),
     related: sameCategory.map((row) => toCard(row, now)),
     nearby: sameDistrict
       .filter((row) => !relatedIds.has(row.id))

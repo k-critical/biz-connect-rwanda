@@ -94,6 +94,19 @@
   }
 }
 
+/* Map pin (src/components/map/leaflet.ts). Leaflet's own panes stay inside the map. */
+.map-pin path {
+  fill: var(--primary);
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+.map-pin circle {
+  fill: var(--surface);
+}
+.leaflet-container {
+  font-family: var(--font-sans);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

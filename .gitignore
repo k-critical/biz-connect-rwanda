@@ -1,6 +1,9 @@
 # Old static prototype: kept on the developer's PC only, never pushed
 /prototype/
 
+# Uploaded photos and claim documents (UPLOADS_DIR)
+/storage/
+
 # dependencies
 /node_modules
 /.pnp

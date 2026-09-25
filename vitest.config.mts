@@ -1,3 +1,5 @@
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
@@ -12,6 +14,8 @@ export default defineConfig({
   test: {
     environment: "node",
     setupFiles: ["dotenv/config"],
+    // Uploads made by tests go to a temporary folder, never the real one.
+    env: { UPLOADS_DIR: join(tmpdir(), "bizconnect-test-uploads") },
     exclude: ["node_modules/**", "prototype/**", ".next/**"],
   },
 });

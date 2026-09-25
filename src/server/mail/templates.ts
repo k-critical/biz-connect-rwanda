@@ -73,6 +73,44 @@ export function resetPasswordEmail(user: { email: string; name: string }, url: s
   });
 }
 
+export function listingSubmittedEmail(
+  user: { email: string; name: string },
+  businessName: string,
+  siteUrl: string,
+) {
+  return render({
+    to: user.email,
+    subject: `We received ${businessName}`,
+    greeting: `Muraho ${user.name},`,
+    paragraphs: [
+      `Thank you for listing ${businessName} on BizConnect Rwanda. An admin will check it and email you when it's live, or if anything needs changing.`,
+      "You can keep improving the listing from your dashboard while you wait.",
+    ],
+    action: { label: "Open your dashboard", url: new URL("/dashboard", siteUrl).toString() },
+    closing:
+      "If you didn't do this, someone may be using your account. Reset your password from the sign-in page.",
+  });
+}
+
+export function claimReceivedEmail(
+  user: { email: string; name: string },
+  businessName: string,
+  siteUrl: string,
+) {
+  return render({
+    to: user.email,
+    subject: `Your request to manage ${businessName}`,
+    greeting: `Muraho ${user.name},`,
+    paragraphs: [
+      `We received your request to manage the ${businessName} listing. An admin will check it, and may call the number you gave to confirm.`,
+      "We'll email you when it's decided. If it's approved, the listing will appear in your dashboard.",
+    ],
+    action: { label: "Open your dashboard", url: new URL("/dashboard", siteUrl).toString() },
+    closing:
+      "If you didn't do this, someone may be using your account. Reset your password from the sign-in page.",
+  });
+}
+
 export function existingAccountEmail(user: { email: string; name: string }, siteUrl: string) {
   return render({
     to: user.email,

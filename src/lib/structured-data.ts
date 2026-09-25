@@ -26,6 +26,8 @@ export type StructuredBusiness = {
   hours: HoursPeriod[];
   latitude: number | null;
   longitude: number | null;
+  /** Absolute photo addresses, cover first. */
+  images?: string[];
 };
 
 /** schema.org LocalBusiness data, so search engines can show hours, area and type. */
@@ -36,6 +38,7 @@ export function localBusinessJsonLd(b: StructuredBusiness) {
     name: b.name,
     description: b.description,
     url: b.url,
+    ...(b.images?.length && { image: b.images }),
     ...(b.phone && { telephone: b.phone }),
     ...(b.priceLabel && { priceRange: b.priceLabel }),
     address: {
