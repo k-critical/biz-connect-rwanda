@@ -15,7 +15,28 @@ export const businessCardSelect = {
   district: { select: { name: true } },
   categories: { where: { position: 0 }, select: { category: { select: { slug: true } } } },
   openingHours: { select: { dayOfWeek: true, opensAt: true, closesAt: true } },
+  photos: {
+    orderBy: { position: "asc" },
+    take: 1,
+    select: { storageKey: true, blurDataUrl: true, altText: true },
+  },
 } as const satisfies Prisma.BusinessSelect;
+
+/** Everything a profile page shows. Used for public profiles and the owner's preview. */
+export const businessProfileInclude = {
+  district: { include: { province: true } },
+  categories: { orderBy: { position: "asc" }, include: { category: true } },
+  openingHours: { orderBy: [{ dayOfWeek: "asc" }, { opensAt: "asc" }] },
+  photos: { orderBy: { position: "asc" } },
+  showcaseSections: {
+    orderBy: { position: "asc" },
+    include: { items: { orderBy: { position: "asc" } } },
+  },
+} as const satisfies Prisma.BusinessInclude;
+
+export type BusinessProfileRow = Prisma.BusinessGetPayload<{
+  include: typeof businessProfileInclude;
+}>;
 
 export type BusinessCardRow = Prisma.BusinessGetPayload<{ select: typeof businessCardSelect }>;
 
@@ -127,15 +148,7 @@ export async function findFeaturedBusinesses(limit: number) {
 export async function findPublishedBusinessBySlug(slug: string) {
   return db.business.findFirst({
     where: { ...PUBLISHED, slug },
-    include: {
-      district: { include: { province: true } },
-      categories: { orderBy: { position: "asc" }, include: { category: true } },
-      openingHours: { orderBy: [{ dayOfWeek: "asc" }, { opensAt: "asc" }] },
-      showcaseSections: {
-        orderBy: { position: "asc" },
-        include: { items: { orderBy: { position: "asc" } } },
-      },
-    },
+    include: businessProfileInclude,
   });
 }
 

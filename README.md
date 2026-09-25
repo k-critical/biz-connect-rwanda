@@ -4,13 +4,15 @@ A discovery platform for small businesses in Rwanda: visitors find a business an
 directly on WhatsApp, by phone or by email; owners keep their listing up to date; admins review
 what gets published.
 
-Status: **Milestone 4 (accounts)**: public directory plus registration, email confirmation,
-sign-in, password reset and roles. The listing wizard arrives in Milestone 5.
+Status: **Milestone 5 (owner flow)**: public directory, accounts, and everything an owner needs:
+the "List your business" wizard, photo uploads, an owner dashboard and claiming an existing
+listing. Admin review arrives in Milestone 6.
 
 ## Tech stack
 
 Next.js 16 (App Router) · TypeScript (strict) · Tailwind CSS 4 · PostgreSQL 16 · Prisma 7 ·
-Better Auth (Argon2id passwords) · Nodemailer · Zod · Vitest · ESLint + Prettier · GitHub Actions.
+Better Auth (Argon2id passwords) · sharp (photos) · Leaflet + OpenStreetMap (maps) · Nodemailer ·
+Zod · Vitest · ESLint + Prettier · GitHub Actions.
 pg-boss arrives in a later milestone.
 
 ## Local setup (Windows)
@@ -114,11 +116,12 @@ GitHub Actions runs lint, type-check and formatting, builds a fresh PostgreSQL d
 migrations, seeds it twice, checks the schema and migrations match, runs the tests, builds the app
 and runs `npm audit`.
 
-**Tests.** Most tests are plain unit tests. Two files run against your local database:
+**Tests.** Most tests are plain unit tests. Three files run against your local database:
 `src/server/services/directory-service.test.ts` expects the demo data (run `npm run db:seed`
 first) and checks search, filters and "open now"; `src/server/auth/auth.test.ts` runs the real
 sign-up, confirmation, sign-in, reset and rate-limit flows with emails captured in memory, using
-throwaway accounts it deletes afterwards.
+throwaway accounts it deletes afterwards; `src/server/services/listing-service.test.ts` runs the
+owner and claim flows (it also needs the seed), saving test photos in a temporary folder.
 
 ## Accounts
 
@@ -145,6 +148,28 @@ npm run user:make-admin -- you@example.com
 the missing ones into your `.env`. It also generates `BETTER_AUTH_SECRET` if it's empty, without
 printing it.
 
+## Listing a business
+
+Signed-in people can list a business at `/list-your-business` in four steps: the basics, contact
+and location (with a map pin), photos and hours, then review and send. Each step saves a draft;
+sending puts the listing in **Waiting for review**. Starting a listing gives the account the
+`OWNER` role. Owners manage everything from `/dashboard`: details, contact, hours, photos, the
+menu or products, and a preview. Changes to a live listing appear straight away; a suspended
+listing can't be edited, and only drafts can be deleted.
+
+Until the admin screens arrive (Milestone 6), approve a listing by hand: run
+`npm run db:studio`, open the `businesses` table and change its `status` to `APPROVED`.
+
+**Photos.** The browser shrinks photos before sending them. The server then checks what each file
+really is (JPEG, PNG or WebP only), turns it the right way up, removes camera data such as GPS
+location, and saves three WebP sizes (480, 960 and 1600 pixels wide) plus a tiny blurred preview.
+Files live in `UPLOADS_DIR` (default `./storage`, never committed) behind a small storage
+interface, so they can move to S3-style storage later. Back this folder up with the database.
+
+**Claiming a listing.** Listings that nobody manages show "Is this your business?". The request
+asks how the person is connected, a phone number to call, a message and optional proof (a photo or
+PDF), which is stored under `private/` and never served publicly. Admins decide in Milestone 6.
+
 ## Search
 
 Search combines PostgreSQL full-text search (over the name, description, sector, district and
@@ -163,10 +188,12 @@ src/
   app/                 routes and UI (pages, layouts, API route handlers)
   components/          UI building blocks (see /styleguide in development)
   config/              settings, categories and site navigation
-  lib/                 pure helpers: opening hours, URL filters, formatting, safe links
+  lib/                 pure helpers: opening hours, URL filters, validation rules, phone numbers
   server/
     services/          business rules
     repositories/      the only place that talks to the database
+    images/            photo checks and resizing (sharp)
+    storage/           where uploaded files are kept
 scripts/               developer helper scripts
 ```
 

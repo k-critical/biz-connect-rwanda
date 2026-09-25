@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ShieldCheck } from "lucide-react";
+import { LayoutDashboard, ShieldCheck } from "lucide-react";
 import { ROLE_LABELS, hasRole, type Role } from "@/lib/roles";
 import { requireUser } from "@/server/auth/session";
 import { SignOutButton } from "@/components/auth/sign-out-button";
@@ -51,11 +51,20 @@ export default async function AccountPage() {
         </div>
       </dl>
 
-      <section className="mt-8 rounded-2xl border border-dashed border-border p-6">
+      <section className="mt-8 rounded-2xl border border-border bg-surface-2 p-6">
         <h2 className="text-xl font-bold">Your businesses</h2>
         <p className="mt-2 text-ink-muted">
-          Soon you&apos;ll be able to list your business or claim an existing listing from here.
+          List a business, finish a draft, update your photos and hours, or follow a request to
+          manage an existing listing.
         </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <ButtonLink href="/dashboard">
+            <LayoutDashboard aria-hidden /> Open your dashboard
+          </ButtonLink>
+          <ButtonLink href="/list-your-business" variant="secondary">
+            List a business
+          </ButtonLink>
+        </div>
       </section>
 
       {hasRole(role, "ADMIN") && (

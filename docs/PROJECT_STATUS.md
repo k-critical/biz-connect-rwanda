@@ -1,6 +1,6 @@
 # BizConnect Rwanda: project status
 
-_Last updated 24 September 2026, after Milestone 4._
+_Last updated 25 September 2026, after Milestone 5._
 
 ## At a glance
 
@@ -10,14 +10,14 @@ _Last updated 24 September 2026, after Milestone 4._
 | M1 Design system         | Colours (light + dark), fonts, logo, components, style guide      | Done, merged (PR #2)                         |
 | M2 Database              | Prisma schema, migrations, categories, districts, demo businesses | Done, merged (PR #3)                         |
 | M3 Public directory      | Home, explore with search and filters, category pages, profiles   | Done, merged (PR #4)                         |
-| M4 Accounts and roles    | Register, confirm email, sign in, reset password, roles, limits   | **Built and pushed, waiting for your merge** |
-| M5 Owner flow            | Listing wizard, photo uploads, owner dashboard, claim a business  | Not started                                  |
+| M4 Accounts and roles    | Register, confirm email, sign in, reset password, roles, limits   | Done, merged (PR #5)                         |
+| M5 Owner flow            | Listing wizard, photo uploads, owner dashboard, claim a business  | **Built and pushed, waiting for your merge** |
 | M6 Admin                 | Review queue, approve/reject, claims, moderation, audit log       | Not started                                  |
 | M7 Community and insight | Reviews, favourites, view and contact counters, owner analytics   | Not started                                  |
 | M8 Polish                | Kinyarwanda/French, accessibility, performance, legal pages       | Not started                                  |
 | M9 Production            | Docker, HTTPS, backups, monitoring, going live                    | Not started                                  |
 
-Four and a half of ten milestones are done. Everything built so far passes 75 automated tests,
+Five and a half of ten milestones are done. Everything built so far passes 166 automated tests,
 lint, type checks, a production build and a security audit (0 known issues).
 
 ## Where everything lives
@@ -44,13 +44,15 @@ npm run dev
 
 Then open:
 
-| Page                 | Address                          |
-| -------------------- | -------------------------------- |
-| The website          | http://localhost:3000            |
-| Test inbox (Mailpit) | http://localhost:8025            |
-| Health check         | http://localhost:3000/api/health |
-| Style guide          | http://localhost:3000/styleguide |
-| Database viewer      | run `npm run db:studio`          |
+| Page                 | Address                                  |
+| -------------------- | ---------------------------------------- |
+| The website          | http://localhost:3000                    |
+| Test inbox (Mailpit) | http://localhost:8025                    |
+| Health check         | http://localhost:3000/api/health         |
+| Style guide          | http://localhost:3000/styleguide         |
+| List a business      | http://localhost:3000/list-your-business |
+| Owner dashboard      | http://localhost:3000/dashboard          |
+| Database viewer      | run `npm run db:studio`                  |
 
 **Restart `npm run dev` after any database change** (`npm run db:migrate`), or new tables won't
 be visible to the running server.
@@ -82,6 +84,16 @@ reset. Passwords hashed with Argon2id. Sessions in the database. Login attempts 
 Roles: member, business owner, admin. No built-in admin: register, then run
 `npm run user:make-admin -- your@email`.
 
+**M5 Owner flow.** "List your business" in four steps (the basics, contact and location with a
+map pin, photos and hours, review and send), saving a draft after each step. An owner dashboard
+to edit details, contact, hours, photos and the menu/products, with a preview of the public page
+and a checklist of what's missing. Photos are shrunk in the browser, then checked, turned upright,
+stripped of GPS data and saved as three WebP sizes with a blurred placeholder, in a storage folder
+that can move to cloud storage later. Profiles now show a photo gallery with a full-screen viewer,
+a map with Google Maps and OpenStreetMap links, and "Is this your business?" to claim a listing
+(with private proof for admins). Phone numbers are stored as +250…; web, Facebook and Instagram
+links are checked.
+
 ## Decisions made along the way
 
 | Decision                                          | Why                                                                                     |
@@ -93,21 +105,23 @@ Roles: member, business owner, admin. No built-in admin: register, then run
 | Demo businesses have no phone numbers             | So nobody real gets messaged by accident                                                |
 | Search uses English word forms plus typo matching | Handles "hotels" vs "hotel"; Kinyarwanda words match exactly or with typos              |
 | Prototype kept out of GitHub                      | It contains RHA bank details and a fake admin password                                  |
+| Edits to a live listing appear straight away      | Owners fix hours and prices often; admins can suspend a listing (M6) if it's abused     |
+| A listing's web address never changes once live   | Links people shared keep working even if the owner renames the business                 |
+| Map tiles from OpenStreetMap, no API key          | Free; fine at our size. A paid tile provider may be needed if traffic grows a lot       |
 
 ## What's left
 
-**M5 Owner flow**
+**M5 leftovers (small)**
 
-- Four-step "List your business" wizard (details, contact and location, hours and photos, review)
-- Photo uploads: size and type checks, resized to WebP, stored behind a swappable storage layer
-- Owner dashboard: edit details, hours, menu/products and photos
-- Claim an existing listing, with evidence for an admin to check
-- Owners get the `OWNER` role; map pins once a business has coordinates
-- Suggested: the public `/api/v1` read API
+- The public `/api/v1` read API (it was only suggested for M5)
+- Big changes to a live listing (e.g. its name) could go back to review, if abuse appears
+- A general rate limit on uploads and claims (today: 12 photos per listing, 10 listings per
+  account, 3 open claims per person)
+  **M6 Admin**
 
-**M6 Admin**
-
-- Submissions queue: approve, or reject with a reason that's emailed to the owner
+- Submissions queue: approve, or reject with a reason that's emailed to the owner (until then,
+  approve by hand in `npm run db:studio`: set the listing's `status` to `APPROVED`)
+- See claim proof, approve a claim (the listing moves to that person's dashboard)
 - Claims review, suspending listings, reports from visitors
 - Audit log of every admin action
 - Background job queue (pg-boss) for all emails, including the auth emails
@@ -140,8 +154,8 @@ Roles: member, business owner, admin. No built-in admin: register, then run
 
 | When      | What                                                                                     |
 | --------- | ---------------------------------------------------------------------------------------- |
-| Now       | Merge the M4 pull request (both clicks: **Merge pull request**, then **Confirm merge**)  |
-| Now       | Say if you want to keep Better Auth (my recommendation) or go back to Auth.js            |
+| Now       | Merge the M5 pull request (both clicks: **Merge pull request**, then **Confirm merge**)  |
+| Now       | Run `npm run env:sync` and restart `npm run dev` (new setting and new tables)            |
 | Before M8 | The platform's real WhatsApp number and email; a logo if you have one                    |
 | Before M8 | Whether the Rwanda Hospitality Association content may be published                      |
 | Before M8 | Someone to check Kinyarwanda and French wording                                          |
@@ -150,13 +164,13 @@ Roles: member, business owner, admin. No built-in admin: register, then run
 
 ## Keeping the work going smoothly
 
-**Your Claude usage** (checked 24 September 2026, 07:26 Kigali time):
+**Your Claude usage** (checked 25 September 2026, 07:47 Kigali time):
 
 | Limit              | Used | Refills                             |
 | ------------------ | ---- | ----------------------------------- |
 | Plan               | Pro  |                                     |
-| 5-hour limit       | 23%  | 11:30 Kigali time (09:30 UTC) today |
-| Weekly, all models | 27%  | 09:00 Kigali time (07:00 UTC) today |
+| 5-hour limit       | 37%  | 11:50 Kigali time (09:50 UTC) today |
+| Weekly, all models | 8%   | Thursday 1 October, 09:00 Kigali    |
 | Extra usage        | Off  | $0.68 of the $20 monthly cap spent  |
 
 Nothing expires: both limits refill on their own. If you hit a limit mid-milestone, nothing is
@@ -166,9 +180,9 @@ usage (in your Claude settings) would let work carry on past a limit, charged up
 **Tips for the next milestones**
 
 - **Start each milestone in a fresh chat session**, opened on the `D:\dev\biz-connect-rwanda`
-  folder. The current conversation is over 80% full. A new session reads `CLAUDE.md`
+  folder. Long conversations get summarised and lose detail. A new session reads `CLAUDE.md`
   automatically, which now points to this file and the working agreement.
-- To begin, say: _"Continue with Milestone 5 as described in docs/PROJECT_STATUS.md."_
+- To begin, say: _"Continue with Milestone 6 as described in docs/PROJECT_STATUS.md."_
 - Keep Mailpit and the dev server running while you test, and restart the dev server after
   database changes.
 - Open a **new** terminal after installing any program, so it can find it.

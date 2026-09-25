@@ -17,6 +17,9 @@ export const envSchema = z.object({
   SMTP_PASSWORD: z.string().min(1).optional(),
   /** Sender shown on emails, e.g. `BizConnect Rwanda <no-reply@example.rw>`. */
   MAIL_FROM: z.string().min(3),
+
+  /** Folder for uploaded photos and claim documents. Back it up with the database. */
+  UPLOADS_DIR: z.string().min(1).default("./storage"),
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -1,5 +1,6 @@
 import { Globe, Mail, MessageCircle, Phone } from "lucide-react";
 import type { BusinessProfile } from "@/server/services/directory-service";
+import { formatPhone } from "@/lib/phone";
 import { displayHost, safeExternalUrl, telHref } from "@/lib/safe-links";
 import { whatsappLink } from "@/lib/whatsapp";
 import { ButtonLink } from "@/components/ui/button";
@@ -39,7 +40,7 @@ export function ContactCard({ name, contact }: { name: string; contact: Contact 
             )}
             {contact.phone && (
               <ButtonLink href={telHref(contact.phone)} variant="secondary" className="w-full">
-                <Phone aria-hidden /> Call {contact.phone}
+                <Phone aria-hidden /> Call {formatPhone(contact.phone)}
               </ButtonLink>
             )}
             {contact.email && (

@@ -13,6 +13,14 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { SelectField, TextAreaField, TextField } from "@/components/ui/field";
 import { Rating } from "@/components/ui/rating";
 import { Skeleton } from "@/components/ui/skeleton";
+import { listingChecklist, type ListingStatus } from "@/lib/listing-status";
+import { DetailsForm } from "@/components/owner/details-form";
+import { HoursForm } from "@/components/owner/hours-form";
+import { ListingChecklist } from "@/components/owner/listing-checklist";
+import { PhotoManager } from "@/components/owner/photo-manager";
+import { ShowcaseForm } from "@/components/owner/showcase-form";
+import { StatusBadge } from "@/components/owner/status-badge";
+import { WizardSteps } from "@/components/owner/wizard-steps";
 
 export const metadata: Metadata = {
   title: "Style guide",
@@ -234,6 +242,88 @@ export default function StyleguidePage() {
             title="No businesses match these filters"
             description="Try another category, or clear the filters to see everything nearby."
             action={<Button variant="secondary">Clear filters</Button>}
+          />
+        </div>
+      </Section>
+      <Section title="Owner tools">
+        <p className="max-w-2xl text-sm text-ink-muted">
+          The listing wizard and dashboard pieces, with sample data. Saving does nothing here: these
+          forms need a signed-in owner.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {(["DRAFT", "PENDING", "APPROVED", "REJECTED", "SUSPENDED"] as ListingStatus[]).map(
+            (status) => (
+              <StatusBadge key={status} status={status} />
+            ),
+          )}
+        </div>
+        <div className="max-w-3xl">
+          <WizardSteps current="hours" businessId="00000000-0000-0000-0000-000000000000" />
+        </div>
+        <div className="max-w-3xl">
+          <ListingChecklist
+            hrefBase="/styleguide"
+            items={listingChecklist({
+              whatsapp: "+250700000000",
+              phone: null,
+              email: null,
+              latitude: null,
+              hoursCount: 5,
+              photoCount: 0,
+              showcaseCount: 0,
+            })}
+          />
+        </div>
+        <div className="max-w-3xl">
+          <DetailsForm
+            mode="edit"
+            businessId="00000000-0000-0000-0000-000000000000"
+            districts={[
+              {
+                name: "Kigali City",
+                districts: [
+                  { slug: "gasabo", name: "Gasabo" },
+                  { slug: "nyarugenge", name: "Nyarugenge" },
+                ],
+              },
+            ]}
+            defaults={{
+              name: "Demo Grill House",
+              tagline: "Sample listing: brochettes and fresh juice until late.",
+              description: "Sample description for the style guide.",
+              category: "restaurants",
+              extraCategories: ["entertainment"],
+              district: "gasabo",
+              priceLevel: 2,
+            }}
+          />
+        </div>
+        <div className="max-w-3xl">
+          <HoursForm
+            mode="edit"
+            businessId="00000000-0000-0000-0000-000000000000"
+            defaults={[
+              { dayOfWeek: 1, opensAt: 480, closesAt: 720 },
+              { dayOfWeek: 1, opensAt: 840, closesAt: 1080 },
+              { dayOfWeek: 5, opensAt: 1080, closesAt: 120 },
+              { dayOfWeek: 6, opensAt: 0, closesAt: 1440 },
+            ]}
+          />
+        </div>
+        <PhotoManager businessId="00000000-0000-0000-0000-000000000000" photos={[]} />
+        <div className="max-w-3xl">
+          <ShowcaseForm
+            businessId="00000000-0000-0000-0000-000000000000"
+            examples="“Food”, “Drinks” or “Breakfast”"
+            defaults={[
+              {
+                title: "Grill",
+                items: [
+                  { name: "Goat brochette", description: "With fries", priceRwf: 1500 },
+                  { name: "Grilled tilapia", description: null, priceRwf: null },
+                ],
+              },
+            ]}
           />
         </div>
       </Section>

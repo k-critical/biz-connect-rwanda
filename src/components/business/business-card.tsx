@@ -15,7 +15,8 @@ export type BusinessCardData = {
   categorySlug: CategorySlug;
   tagline: string;
   location: string;
-  photoUrl?: string | null;
+  /** The cover photo: `src` from photoSrc(), without a size. */
+  photo?: { src: string; blurDataUrl: string } | null;
   rating?: { value: number; count: number } | null;
   isOpenNow?: boolean | null;
   whatsappNumber?: string | null;
@@ -27,12 +28,14 @@ export function BusinessCard({ business }: { business: BusinessCardData }) {
   return (
     <article className="group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-card transition-shadow hover:shadow-lift">
       <div className="relative aspect-[4/3] overflow-hidden bg-surface-2">
-        {business.photoUrl ? (
+        {business.photo ? (
           <Image
-            src={business.photoUrl}
+            src={business.photo.src}
             alt=""
             fill
             sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+            placeholder={business.photo.blurDataUrl ? "blur" : "empty"}
+            blurDataURL={business.photo.blurDataUrl || undefined}
             className="object-cover transition-transform duration-200 group-hover:scale-[1.03]"
           />
         ) : (

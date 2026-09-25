@@ -23,19 +23,20 @@ enum BusinessStatus {
 }
 
 model User {
-  id            String     @id @default(uuid(7)) @db.Uuid
-  email         String     @unique
-  emailVerified Boolean    @default(false) @map("email_verified")
+  id            String         @id @default(uuid(7)) @db.Uuid
+  email         String         @unique
+  emailVerified Boolean        @default(false) @map("email_verified")
   name          String
   image         String?
   phone         String?
-  role          Role       @default(VISITOR)
-  isDemo        Boolean    @default(false) @map("is_demo")
-  createdAt     DateTime   @default(now()) @map("created_at")
-  updatedAt     DateTime   @updatedAt @map("updated_at")
+  role          Role           @default(VISITOR)
+  isDemo        Boolean        @default(false) @map("is_demo")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
   businesses    Business[]
   sessions      Session[]
   accounts      Account[]
+  claimRequests ClaimRequest[]
 
   @@map("users")
 }
@@ -156,12 +157,15 @@ model Business {
   priceLevel       Int?               @map("price_level") @db.SmallInt
   ownerId          String?            @map("owner_id") @db.Uuid
   owner            User?              @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  /// When the owner last sent the listing for review.
+  submittedAt      DateTime?          @map("submitted_at")
   createdAt        DateTime           @default(now()) @map("created_at")
   updatedAt        DateTime           @updatedAt @map("updated_at")
   categories       BusinessCategory[]
   openingHours     OpeningHours[]
   photos           Photo[]
   showcaseSections ShowcaseSection[]
+  claimRequests    ClaimRequest[]
 
   @@index([status, districtId])
   @@index([ownerId])
@@ -198,16 +202,21 @@ model OpeningHours {
   @@map("opening_hours")
 }
 
+/// Stored as WebP files in three sizes: `<storageKey>-sm.webp`, `-md.webp` and `-lg.webp`.
+/// Position 0 is the cover photo.
 model Photo {
-  id         String   @id @default(uuid(7)) @db.Uuid
-  businessId String   @map("business_id") @db.Uuid
-  storageKey String   @map("storage_key")
-  width      Int
-  height     Int
-  altText    String   @map("alt_text")
-  position   Int      @db.SmallInt
-  createdAt  DateTime @default(now()) @map("created_at")
-  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  id          String   @id @default(uuid(7)) @db.Uuid
+  businessId  String   @map("business_id") @db.Uuid
+  storageKey  String   @map("storage_key")
+  /// Size of the largest stored version.
+  width       Int
+  height      Int
+  /// A tiny blurred copy shown while the photo loads.
+  blurDataUrl String   @default("") @map("blur_data_url")
+  altText     String   @map("alt_text")
+  position    Int      @db.SmallInt
+  createdAt   DateTime @default(now()) @map("created_at")
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([businessId, position])
   @@map("photos")
@@ -237,4 +246,38 @@ model ShowcaseItem {
 
   @@index([sectionId, position])
   @@map("showcase_items")
+}
+
+enum ClaimStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+/// Someone asking to manage an existing listing that has no owner. An admin checks it.
+model ClaimRequest {
+  id           String      @id @default(uuid(7)) @db.Uuid
+  businessId   String      @map("business_id") @db.Uuid
+  userId       String      @map("user_id") @db.Uuid
+  /// How they're connected to the business, e.g. "Owner" or "Manager".
+  relationship String
+  /// A number the admin can call to check the claim.
+  contactPhone String      @map("contact_phone")
+  message      String
+  /// Private file (photo or PDF) proving the connection; never served publicly.
+  evidenceKey  String?     @map("evidence_key")
+  evidenceType String?     @map("evidence_type")
+  status       ClaimStatus @default(PENDING)
+  decisionNote String?     @map("decision_note")
+  decidedAt    DateTime?   @map("decided_at")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+  business     Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@index([businessId])
+  @@index([userId])
+  @@map("claim_requests")
 }
