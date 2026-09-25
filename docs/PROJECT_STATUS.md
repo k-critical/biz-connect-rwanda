@@ -1,6 +1,6 @@
 # BizConnect Rwanda: project status
 
-_Last updated 25 September 2026, after Milestone 5._
+_Last updated 25 September 2026, after Milestone 6._
 
 ## At a glance
 
@@ -11,13 +11,13 @@ _Last updated 25 September 2026, after Milestone 5._
 | M2 Database              | Prisma schema, migrations, categories, districts, demo businesses | Done, merged (PR #3)                         |
 | M3 Public directory      | Home, explore with search and filters, category pages, profiles   | Done, merged (PR #4)                         |
 | M4 Accounts and roles    | Register, confirm email, sign in, reset password, roles, limits   | Done, merged (PR #5)                         |
-| M5 Owner flow            | Listing wizard, photo uploads, owner dashboard, claim a business  | **Built and pushed, waiting for your merge** |
-| M6 Admin                 | Review queue, approve/reject, claims, moderation, audit log       | Not started                                  |
+| M5 Owner flow            | Listing wizard, photo uploads, owner dashboard, claim a business  | Done, merged (PR #6)                         |
+| M6 Admin                 | Review queue, approve/reject, claims, moderation, audit log       | **Built and pushed, waiting for your merge** |
 | M7 Community and insight | Reviews, favourites, view and contact counters, owner analytics   | Not started                                  |
 | M8 Polish                | Kinyarwanda/French, accessibility, performance, legal pages       | Not started                                  |
 | M9 Production            | Docker, HTTPS, backups, monitoring, going live                    | Not started                                  |
 
-Five and a half of ten milestones are done. Everything built so far passes 166 automated tests,
+Six and a half of ten milestones are done. Everything built so far passes 176 automated tests,
 lint, type checks, a production build and a security audit (0 known issues).
 
 ## Where everything lives
@@ -52,6 +52,7 @@ Then open:
 | Style guide          | http://localhost:3000/styleguide         |
 | List a business      | http://localhost:3000/list-your-business |
 | Owner dashboard      | http://localhost:3000/dashboard          |
+| Admin                | http://localhost:3000/admin              |
 | Database viewer      | run `npm run db:studio`                  |
 
 **Restart `npm run dev` after any database change** (`npm run db:migrate`), or new tables won't
@@ -94,6 +95,16 @@ a map with Google Maps and OpenStreetMap links, and "Is this your business?" to 
 (with private proof for admins). Phone numbers are stored as +250…; web, Facebook and Instagram
 links are checked.
 
+**M6 Admin.** `/admin` with an overview of what's waiting, a review queue (oldest first) with a
+full preview of each listing, and decisions: approve, ask for changes with a reason, feature on
+the home page, suspend with a reason, restore. Owners get an email for each decision and see the
+admin's note on their dashboard. Claims show the private proof and a number to call; approving
+gives the listing to that person and turns down other requests for it. Signed-in visitors can
+report a listing, and admins resolve or dismiss reports. Every decision is written to an audit
+log in the same database step as the change, and two admins can't act on the same thing at once.
+All emails now go through a job queue in PostgreSQL (pg-boss) and are retried if the mail server
+is down, so none are lost.
+
 ## Decisions made along the way
 
 | Decision                                          | Why                                                                                     |
@@ -108,23 +119,20 @@ links are checked.
 | Edits to a live listing appear straight away      | Owners fix hours and prices often; admins can suspend a listing (M6) if it's abused     |
 | A listing's web address never changes once live   | Links people shared keep working even if the owner renames the business                 |
 | Map tiles from OpenStreetMap, no API key          | Free; fine at our size. A paid tile provider may be needed if traffic grows a lot       |
+| Email worker runs inside the web server           | One process to run on a small server; it can move to its own process later              |
+| Reporting a listing needs an account              | Keeps spam out without a CAPTCHA; reporters aren't emailed back                         |
+| Claim proof is kept after a decision              | Admins may need it if the decision is disputed; account deletion (M8) must remove it    |
 
 ## What's left
 
-**M5 leftovers (small)**
+**Small leftovers from M5 and M6**
 
 - The public `/api/v1` read API (it was only suggested for M5)
 - Big changes to a live listing (e.g. its name) could go back to review, if abuse appears
-- A general rate limit on uploads and claims (today: 12 photos per listing, 10 listings per
-  account, 3 open claims per person)
-  **M6 Admin**
-
-- Submissions queue: approve, or reject with a reason that's emailed to the owner (until then,
-  approve by hand in `npm run db:studio`: set the listing's `status` to `APPROVED`)
-- See claim proof, approve a claim (the listing moves to that person's dashboard)
-- Claims review, suspending listings, reports from visitors
-- Audit log of every admin action
-- Background job queue (pg-boss) for all emails, including the auth emails
+- A general rate limit on uploads, claims and reports (today: 12 photos per listing, 10 listings
+  per account, 3 open claims and 5 open reports per person)
+- Admin pages for users and categories (today: `npm run user:make-admin` and the seed)
+- Emails to admins when something new is waiting (today: check the overview)
 
 **M7 Community and insight**
 
@@ -154,8 +162,8 @@ links are checked.
 
 | When      | What                                                                                     |
 | --------- | ---------------------------------------------------------------------------------------- |
-| Now       | Merge the M5 pull request (both clicks: **Merge pull request**, then **Confirm merge**)  |
-| Now       | Run `npm run env:sync` and restart `npm run dev` (new setting and new tables)            |
+| Now       | Merge the M6 pull request (both clicks: **Merge pull request**, then **Confirm merge**)  |
+| Now       | Restart `npm run dev` (new tables), then make yourself admin to try `/admin`             |
 | Before M8 | The platform's real WhatsApp number and email; a logo if you have one                    |
 | Before M8 | Whether the Rwanda Hospitality Association content may be published                      |
 | Before M8 | Someone to check Kinyarwanda and French wording                                          |
@@ -164,13 +172,13 @@ links are checked.
 
 ## Keeping the work going smoothly
 
-**Your Claude usage** (checked 25 September 2026, 07:47 Kigali time):
+**Your Claude usage** (checked 25 September 2026, 16:45 Kigali time):
 
 | Limit              | Used | Refills                             |
 | ------------------ | ---- | ----------------------------------- |
 | Plan               | Pro  |                                     |
-| 5-hour limit       | 37%  | 11:50 Kigali time (09:50 UTC) today |
-| Weekly, all models | 8%   | Thursday 1 October, 09:00 Kigali    |
+| 5-hour limit       | 34%  | 17:40 Kigali time (15:40 UTC) today |
+| Weekly, all models | 14%  | Thursday 1 October, 09:00 Kigali    |
 | Extra usage        | Off  | $0.68 of the $20 monthly cap spent  |
 
 Nothing expires: both limits refill on their own. If you hit a limit mid-milestone, nothing is
@@ -182,7 +190,7 @@ usage (in your Claude settings) would let work carry on past a limit, charged up
 - **Start each milestone in a fresh chat session**, opened on the `D:\dev\biz-connect-rwanda`
   folder. Long conversations get summarised and lose detail. A new session reads `CLAUDE.md`
   automatically, which now points to this file and the working agreement.
-- To begin, say: _"Continue with Milestone 6 as described in docs/PROJECT_STATUS.md."_
+- To begin, say: _"Continue with Milestone 7 as described in docs/PROJECT_STATUS.md."_
 - Keep Mailpit and the dev server running while you test, and restart the dev server after
   database changes.
 - Open a **new** terminal after installing any program, so it can find it.

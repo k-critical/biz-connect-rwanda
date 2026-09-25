@@ -11,7 +11,7 @@ vi.mock("@/server/mail/mailer", () => ({
   sendEmail: async (message: EmailMessage) => {
     outbox.push(message);
   },
-  sendEmailInBackground: (message: EmailMessage) => {
+  queueEmail: async (message: EmailMessage) => {
     outbox.push(message);
   },
 }));
@@ -328,6 +328,8 @@ describe("claiming an existing listing", () => {
   beforeAll(async () => {
     const found = await db.business.findFirst({
       where: { status: "APPROVED", ownerId: null, isDemo: true },
+      // admin-service.test.ts claims from the other end of the list; test files run in parallel.
+      orderBy: { name: "asc" },
       select: { id: true, slug: true },
     });
     if (!found) throw new Error("Seed the database first: npm run db:seed");

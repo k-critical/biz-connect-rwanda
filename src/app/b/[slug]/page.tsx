@@ -5,6 +5,7 @@ import { env } from "@/config/env";
 import { getBusinessProfile } from "@/server/services/directory-service";
 import { jsonLdScript, localBusinessJsonLd } from "@/lib/structured-data";
 import { BusinessProfileView } from "@/components/profile/business-profile-view";
+import { Alert } from "@/components/ui/alert";
 
 // Open/closed status depends on the current time, so this page is rendered per request.
 export const dynamic = "force-dynamic";
@@ -36,8 +37,8 @@ export async function generateMetadata({ params }: PageProps<"/b/[slug]">): Prom
   };
 }
 
-export default async function BusinessPage({ params }: PageProps<"/b/[slug]">) {
-  const profile = await loadProfile((await params).slug);
+export default async function BusinessPage({ params, searchParams }: PageProps<"/b/[slug]">) {
+  const [profile, query] = await Promise.all([loadProfile((await params).slug), searchParams]);
   if (!profile) notFound();
 
   const { business: b, related, nearby } = profile;
@@ -63,6 +64,11 @@ export default async function BusinessPage({ params }: PageProps<"/b/[slug]">) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }}
       />
+      {query.reported && (
+        <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-6">
+          <Alert tone="success">Thank you. An admin will look at your report.</Alert>
+        </div>
+      )}
       <BusinessProfileView business={b} related={related} nearby={nearby} />
     </>
   );

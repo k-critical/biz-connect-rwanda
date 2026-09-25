@@ -37,6 +37,8 @@ model User {
   sessions      Session[]
   accounts      Account[]
   claimRequests ClaimRequest[]
+  reports       Report[]
+  auditLogs     AuditLog[]
 
   @@map("users")
 }
@@ -159,6 +161,10 @@ model Business {
   owner            User?              @relation(fields: [ownerId], references: [id], onDelete: SetNull)
   /// When the owner last sent the listing for review.
   submittedAt      DateTime?          @map("submitted_at")
+  /// What an admin asked the owner to change; shown while the listing needs changes.
+  reviewNote       String?            @map("review_note")
+  /// When an admin last approved, rejected or suspended the listing.
+  reviewedAt       DateTime?          @map("reviewed_at")
   createdAt        DateTime           @default(now()) @map("created_at")
   updatedAt        DateTime           @updatedAt @map("updated_at")
   categories       BusinessCategory[]
@@ -166,6 +172,7 @@ model Business {
   photos           Photo[]
   showcaseSections ShowcaseSection[]
   claimRequests    ClaimRequest[]
+  reports          Report[]
 
   @@index([status, districtId])
   @@index([ownerId])
@@ -280,4 +287,58 @@ model ClaimRequest {
   @@index([businessId])
   @@index([userId])
   @@map("claim_requests")
+}
+
+enum ReportReason {
+  CLOSED
+  WRONG_INFO
+  NOT_REAL
+  OFFENSIVE
+  OTHER
+}
+
+enum ReportStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
+}
+
+/// A visitor telling the admins something is wrong with a listing.
+model Report {
+  id             String       @id @default(uuid(7)) @db.Uuid
+  businessId     String       @map("business_id") @db.Uuid
+  reporterId     String?      @map("reporter_id") @db.Uuid
+  reason         ReportReason
+  message        String
+  status         ReportStatus @default(OPEN)
+  resolutionNote String?      @map("resolution_note")
+  resolvedAt     DateTime?    @map("resolved_at")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  business       Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  reporter       User?        @relation(fields: [reporterId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([businessId])
+  @@index([reporterId])
+  @@map("reports")
+}
+
+/// Every admin action, written in the same transaction as the change itself.
+model AuditLog {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  actorId    String?  @map("actor_id") @db.Uuid
+  /// e.g. "listing.approve"; see src/lib/audit.ts
+  action     String
+  targetType String   @map("target_type")
+  targetId   String   @map("target_id") @db.Uuid
+  /// A readable sentence, kept even if the target is later deleted.
+  summary    String
+  details    Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([targetType, targetId])
+  @@map("audit_logs")
 }

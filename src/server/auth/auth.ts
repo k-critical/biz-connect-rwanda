@@ -5,7 +5,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { env } from "@/config/env";
 import { ROLES } from "@/lib/roles";
 import { db } from "@/server/db";
-import { sendEmailInBackground } from "@/server/mail/mailer";
+import { queueEmail } from "@/server/mail/mailer";
 import {
   existingAccountEmail,
   resetPasswordEmail,
@@ -52,10 +52,10 @@ export const auth = betterAuth({
       verify: ({ hash: stored, password }) => verify(stored, password),
     },
     sendResetPassword: async ({ user, url }) => {
-      sendEmailInBackground(resetPasswordEmail(user, url));
+      void queueEmail(resetPasswordEmail(user, url));
     },
     onExistingUserSignUp: async ({ user }) => {
-      sendEmailInBackground(existingAccountEmail(user, env.NEXT_PUBLIC_SITE_URL));
+      void queueEmail(existingAccountEmail(user, env.NEXT_PUBLIC_SITE_URL));
     },
   },
 
@@ -64,7 +64,7 @@ export const auth = betterAuth({
     autoSignInAfterVerification: true,
     expiresIn: days(1),
     sendVerificationEmail: async ({ user, url }) => {
-      sendEmailInBackground(verificationEmail(user, url));
+      void queueEmail(verificationEmail(user, url));
     },
   },
 

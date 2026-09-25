@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12"
   },
   "scripts": {
     "dev": "next dev",
@@ -49,6 +49,7 @@
     "next": "16.3.6",
     "nodemailer": "^10.0.10",
     "pg": "^8.23.0",
+    "pg-boss": "^12.34.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "server-only": "^0.0.1",

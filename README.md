@@ -4,20 +4,20 @@ A discovery platform for small businesses in Rwanda: visitors find a business an
 directly on WhatsApp, by phone or by email; owners keep their listing up to date; admins review
 what gets published.
 
-Status: **Milestone 5 (owner flow)**: public directory, accounts, and everything an owner needs:
-the "List your business" wizard, photo uploads, an owner dashboard and claiming an existing
-listing. Admin review arrives in Milestone 6.
+Status: **Milestone 6 (admin)**: public directory, accounts, the owner flow ("List your
+business" wizard, photos, dashboard, claims), and the admin side: a review queue, claims,
+visitor reports, an audit log, and an email queue that retries. Reviews and favourites arrive in
+Milestone 7.
 
 ## Tech stack
 
 Next.js 16 (App Router) · TypeScript (strict) · Tailwind CSS 4 · PostgreSQL 16 · Prisma 7 ·
-Better Auth (Argon2id passwords) · sharp (photos) · Leaflet + OpenStreetMap (maps) · Nodemailer ·
-Zod · Vitest · ESLint + Prettier · GitHub Actions.
-pg-boss arrives in a later milestone.
+Better Auth (Argon2id passwords) · pg-boss (job queue) · sharp (photos) · Leaflet + OpenStreetMap
+(maps) · Nodemailer · Zod · Vitest · ESLint + Prettier · GitHub Actions.
 
 ## Local setup (Windows)
 
-You need **Node.js 22+**, **Git**, **PostgreSQL 16** and **Mailpit** installed:
+You need **Node.js 22.12+**, **Git**, **PostgreSQL 16** and **Mailpit** installed:
 
 ```bash
 winget install --id Git.Git -e
@@ -116,12 +116,14 @@ GitHub Actions runs lint, type-check and formatting, builds a fresh PostgreSQL d
 migrations, seeds it twice, checks the schema and migrations match, runs the tests, builds the app
 and runs `npm audit`.
 
-**Tests.** Most tests are plain unit tests. Three files run against your local database:
+**Tests.** Most tests are plain unit tests. Five files run against your local database:
 `src/server/services/directory-service.test.ts` expects the demo data (run `npm run db:seed`
 first) and checks search, filters and "open now"; `src/server/auth/auth.test.ts` runs the real
 sign-up, confirmation, sign-in, reset and rate-limit flows with emails captured in memory, using
 throwaway accounts it deletes afterwards; `src/server/services/listing-service.test.ts` runs the
-owner and claim flows (it also needs the seed), saving test photos in a temporary folder.
+owner and claim flows (it also needs the seed), saving test photos in a temporary folder;
+`src/server/services/admin-service.test.ts` runs admin decisions, claims and reports; and
+`src/server/jobs/email-queue.test.ts` puts an email through the real job queue.
 
 ## Accounts
 
@@ -157,9 +159,6 @@ sending puts the listing in **Waiting for review**. Starting a listing gives the
 menu or products, and a preview. Changes to a live listing appear straight away; a suspended
 listing can't be edited, and only drafts can be deleted.
 
-Until the admin screens arrive (Milestone 6), approve a listing by hand: run
-`npm run db:studio`, open the `businesses` table and change its `status` to `APPROVED`.
-
 **Photos.** The browser shrinks photos before sending them. The server then checks what each file
 really is (JPEG, PNG or WebP only), turns it the right way up, removes camera data such as GPS
 location, and saves three WebP sizes (480, 960 and 1600 pixels wide) plus a tiny blurred preview.
@@ -168,7 +167,34 @@ interface, so they can move to S3-style storage later. Back this folder up with 
 
 **Claiming a listing.** Listings that nobody manages show "Is this your business?". The request
 asks how the person is connected, a phone number to call, a message and optional proof (a photo or
-PDF), which is stored under `private/` and never served publicly. Admins decide in Milestone 6.
+PDF), which is stored under `private/` and only ever shown to admins.
+
+## Admin
+
+Admins (see "Creating the first admin" above) get `/admin`:
+
+- **Overview**: what's waiting (listings, claims, reports) and recent admin activity.
+- **Listings**: the review queue, oldest first, plus every other status and a search by name or
+  owner email. Each listing shows a full preview, its owner, open reports and its history.
+  Admins can approve, ask for changes (the reason is emailed to the owner and shown on their
+  dashboard), feature a listing on the home page, suspend it with a reason, or restore it.
+- **Claims**: the request, the phone number to call and the private proof. Approving gives the
+  listing to that person (and makes them an owner); other requests for the same listing are
+  turned down automatically. Turning a claim down needs a reason, which is emailed.
+- **Reports**: signed-in visitors can report a live listing ("Report wrong or harmful
+  information" on its page). Admins resolve or dismiss each report.
+- **Audit log**: every decision, who made it and when, with the note they wrote. Each decision
+  is saved in the same database transaction as its audit entry, and only goes through if nobody
+  else has changed the item since the admin opened it.
+
+## Emails and the job queue
+
+Every email (sign-up confirmation, password reset, listing and claim decisions) goes into a job
+queue kept in PostgreSQL by [pg-boss](https://github.com/timgit/pg-boss), in its own `pgboss`
+schema. A worker inside the web server sends the emails; it starts with the server
+(`src/instrumentation.ts`) and logs `[jobs] email worker started`. If the mail server is down,
+each email is retried up to 6 times with growing gaps (30 seconds, then longer, up to an hour),
+so nothing is lost when Mailpit isn't running. Sent jobs are deleted after 7 days.
 
 ## Search
 
@@ -194,6 +220,7 @@ src/
     repositories/      the only place that talks to the database
     images/            photo checks and resizing (sharp)
     storage/           where uploaded files are kept
+    jobs/              the job queue and its workers (emails)
 scripts/               developer helper scripts
 ```
 
