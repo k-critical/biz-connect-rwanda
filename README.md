@@ -17,7 +17,7 @@ Better Auth (Argon2id passwords) · pg-boss (job queue) · sharp (photos) · Lea
 
 ## Local setup (Windows)
 
-You need **Node.js 22+**, **Git**, **PostgreSQL 16** and **Mailpit** installed:
+You need **Node.js 22.12+**, **Git**, **PostgreSQL 16** and **Mailpit** installed:
 
 ```bash
 winget install --id Git.Git -e
