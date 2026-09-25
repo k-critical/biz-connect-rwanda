@@ -4,20 +4,20 @@ _Last updated 25 September 2026, after Milestone 6._
 
 ## At a glance
 
-| Milestone                | What it covers                                                    | Status                                       |
-| ------------------------ | ----------------------------------------------------------------- | -------------------------------------------- |
-| M0 Foundations           | Next.js app, settings check, health check, lint/format, CI        | Done, merged (PR #1)                         |
-| M1 Design system         | Colours (light + dark), fonts, logo, components, style guide      | Done, merged (PR #2)                         |
-| M2 Database              | Prisma schema, migrations, categories, districts, demo businesses | Done, merged (PR #3)                         |
-| M3 Public directory      | Home, explore with search and filters, category pages, profiles   | Done, merged (PR #4)                         |
-| M4 Accounts and roles    | Register, confirm email, sign in, reset password, roles, limits   | Done, merged (PR #5)                         |
-| M5 Owner flow            | Listing wizard, photo uploads, owner dashboard, claim a business  | Done, merged (PR #6)                         |
-| M6 Admin                 | Review queue, approve/reject, claims, moderation, audit log       | **Built and pushed, waiting for your merge** |
-| M7 Community and insight | Reviews, favourites, view and contact counters, owner analytics   | Not started                                  |
-| M8 Polish                | Kinyarwanda/French, accessibility, performance, legal pages       | Not started                                  |
-| M9 Production            | Docker, HTTPS, backups, monitoring, going live                    | Not started                                  |
+| Milestone                | What it covers                                                    | Status                               |
+| ------------------------ | ----------------------------------------------------------------- | ------------------------------------ |
+| M0 Foundations           | Next.js app, settings check, health check, lint/format, CI        | Done, merged (PR #1)                 |
+| M1 Design system         | Colours (light + dark), fonts, logo, components, style guide      | Done, merged (PR #2)                 |
+| M2 Database              | Prisma schema, migrations, categories, districts, demo businesses | Done, merged (PR #3)                 |
+| M3 Public directory      | Home, explore with search and filters, category pages, profiles   | Done, merged (PR #4)                 |
+| M4 Accounts and roles    | Register, confirm email, sign in, reset password, roles, limits   | Done, merged (PR #5)                 |
+| M5 Owner flow            | Listing wizard, photo uploads, owner dashboard, claim a business  | Done, merged (PR #6)                 |
+| M6 Admin                 | Review queue, approve/reject, claims, moderation, audit log       | Done, merged (PR #7)                 |
+| M7 Community and insight | Reviews, favourites, view and contact counters, owner analytics   | **Started** on branch `m7-community` |
+| M8 Polish                | Kinyarwanda/French, accessibility, performance, legal pages       | Not started                          |
+| M9 Production            | Docker, HTTPS, backups, monitoring, going live                    | Not started                          |
 
-Six and a half of ten milestones are done. Everything built so far passes 176 automated tests,
+Seven of ten milestones are done. Everything built so far passes 176 automated tests,
 lint, type checks, a production build and a security audit (0 known issues).
 
 ## Where everything lives
@@ -134,7 +134,15 @@ is down, so none are lost.
 - Admin pages for users and categories (today: `npm run user:make-admin` and the seed)
 - Emails to admins when something new is waiting (today: check the overview)
 
-**M7 Community and insight**
+**M7 Community and insight** (started 25 September on branch `m7-community`)
+
+Done so far: the database tables (`reviews`, `favorites`, `daily_stats`, and `rating_average`
+/ `rating_count` on businesses; migration `community`, already applied to your local database)
+and the validation rules in `src/lib/review-rules.ts`. Still to build, in this order: the
+repositories and services, review form and list on profiles (with rating breakdown), owner
+replies, admin review moderation (audit-logged), ratings on cards plus a "4 stars and up" filter
+and "Top rated" sort, the favourite button and a "Saved places" page, privacy-friendly visit and
+contact-tap counting (`/api/track`, totals per day only), the owner insights page, tests and docs.
 
 - Reviews with owner replies and moderation; ratings on cards and a rating filter
 - Favourites for signed-in visitors

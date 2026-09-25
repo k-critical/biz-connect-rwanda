@@ -39,6 +39,8 @@ model User {
   claimRequests ClaimRequest[]
   reports       Report[]
   auditLogs     AuditLog[]
+  reviews       Review[]
+  favorites     Favorite[]
 
   @@map("users")
 }
@@ -163,6 +165,10 @@ model Business {
   submittedAt      DateTime?          @map("submitted_at")
   /// What an admin asked the owner to change; shown while the listing needs changes.
   reviewNote       String?            @map("review_note")
+  /// Average of published reviews (0 when there are none) and how many there are. Kept up to
+  /// date whenever a review changes, so cards and sorting don't have to count every time.
+  ratingAverage    Float              @default(0) @map("rating_average")
+  ratingCount      Int                @default(0) @map("rating_count")
   /// When an admin last approved, rejected or suspended the listing.
   reviewedAt       DateTime?          @map("reviewed_at")
   createdAt        DateTime           @default(now()) @map("created_at")
@@ -173,6 +179,9 @@ model Business {
   showcaseSections ShowcaseSection[]
   claimRequests    ClaimRequest[]
   reports          Report[]
+  reviews          Review[]
+  favorites        Favorite[]
+  dailyStats       DailyStat[]
 
   @@index([status, districtId])
   @@index([ownerId])
@@ -341,4 +350,62 @@ model AuditLog {
   @@index([createdAt])
   @@index([targetType, targetId])
   @@map("audit_logs")
+}
+
+enum ReviewStatus {
+  PUBLISHED
+  HIDDEN
+}
+
+/// One review per person per business. Published straight away; admins can hide it.
+model Review {
+  id             String       @id @default(uuid(7)) @db.Uuid
+  businessId     String       @map("business_id") @db.Uuid
+  authorId       String       @map("author_id") @db.Uuid
+  /// 1 to 5 stars
+  rating         Int          @db.SmallInt
+  comment        String
+  status         ReviewStatus @default(PUBLISHED)
+  /// Why an admin hid it; only admins see this.
+  hiddenReason   String?      @map("hidden_reason")
+  ownerReply     String?      @map("owner_reply")
+  ownerRepliedAt DateTime?    @map("owner_replied_at")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  business       Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  author         User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, authorId])
+  @@index([businessId, status, createdAt])
+  @@index([status, createdAt])
+  @@map("reviews")
+}
+
+/// A business someone saved to find again.
+model Favorite {
+  userId     String   @map("user_id") @db.Uuid
+  businessId String   @map("business_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@id([userId, businessId])
+  @@index([businessId])
+  @@map("favorites")
+}
+
+/// Visits and contact taps per business per day (Kigali time). Only totals are kept: no IP
+/// addresses, cookies or anything else that could identify a visitor.
+model DailyStat {
+  businessId     String   @map("business_id") @db.Uuid
+  day            DateTime @db.Date
+  views          Int      @default(0)
+  whatsappClicks Int      @default(0) @map("whatsapp_clicks")
+  callClicks     Int      @default(0) @map("call_clicks")
+  emailClicks    Int      @default(0) @map("email_clicks")
+  websiteClicks  Int      @default(0) @map("website_clicks")
+  business       Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@id([businessId, day])
+  @@map("daily_stats")
 }
