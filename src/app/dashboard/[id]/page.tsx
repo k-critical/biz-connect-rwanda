@@ -80,6 +80,14 @@ export default async function ListingOverviewPage({
 
       <Alert tone={b.status === "REJECTED" || b.status === "SUSPENDED" ? "error" : "info"}>
         <p>{LISTING_STATUS[b.status].help}</p>
+        {b.reviewNote && (b.status === "REJECTED" || b.status === "SUSPENDED") && (
+          <blockquote className="border-l-4 border-border-strong pl-3 whitespace-pre-line">
+            <span className="block text-xs font-semibold tracking-wide text-ink-muted uppercase">
+              Note from the admin
+            </span>
+            {b.reviewNote}
+          </blockquote>
+        )}
         {canSubmitListing(b.status) && (
           <div className="flex flex-wrap gap-2">
             {b.status === "DRAFT" && (

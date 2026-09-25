@@ -27,7 +27,13 @@ export default async function WizardReviewPage({
 
       {business.status === "REJECTED" && (
         <Alert tone="error" className="mt-6">
-          {LISTING_STATUS.REJECTED.help}
+          <p>{LISTING_STATUS.REJECTED.help}</p>
+          {business.reviewNote && (
+            <p className="whitespace-pre-line">
+              <span className="font-semibold">Note from the admin: </span>
+              {business.reviewNote}
+            </p>
+          )}
         </Alert>
       )}
 

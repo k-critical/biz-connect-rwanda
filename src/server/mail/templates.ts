@@ -111,6 +111,118 @@ export function claimReceivedEmail(
   });
 }
 
+type Person = { email: string; name: string };
+const dashboardUrl = (siteUrl: string) => new URL("/dashboard", siteUrl).toString();
+const listingUrl = (slug: string, siteUrl: string) => new URL(`/b/${slug}`, siteUrl).toString();
+
+export function listingApprovedEmail(
+  user: Person,
+  business: { name: string; slug: string },
+  siteUrl: string,
+) {
+  return render({
+    to: user.email,
+    subject: `${business.name} is live on BizConnect Rwanda`,
+    greeting: `Muraho ${user.name},`,
+    paragraphs: [
+      `Good news: ${business.name} has been approved, and anyone can now find it on BizConnect Rwanda.`,
+      "Share the link with your customers, and keep your hours, photos and prices up to date from your dashboard.",
+    ],
+    action: { label: "See your listing", url: listingUrl(business.slug, siteUrl) },
+    closing: "Thank you for being part of BizConnect Rwanda.",
+  });
+}
+
+export function listingNeedsChangesEmail(
+  user: Person,
+  businessName: string,
+  note: string,
+  siteUrl: string,
+) {
+  return render({
+    to: user.email,
+    subject: `${businessName} needs a few changes`,
+    greeting: `Muraho ${user.name},`,
+    paragraphs: [
+      `We checked ${businessName}, and it needs some changes before it can go live. The admin wrote:`,
+      note,
+      "Update the listing from your dashboard, then send it for review again.",
+    ],
+    action: { label: "Open your dashboard", url: dashboardUrl(siteUrl) },
+    closing: "Thank you for helping us keep BizConnect Rwanda accurate.",
+  });
+}
+
+export function listingSuspendedEmail(
+  user: Person,
+  businessName: string,
+  note: string,
+  siteUrl: string,
+) {
+  return render({
+    to: user.email,
+    subject: `${businessName} has been hidden`,
+    greeting: `Muraho ${user.name},`,
+    paragraphs: [
+      `${businessName} is no longer shown on BizConnect Rwanda. The admin gave this reason:`,
+      note,
+    ],
+    action: { label: "Open your dashboard", url: dashboardUrl(siteUrl) },
+    closing: "If you think this is a mistake, contact the BizConnect Rwanda team.",
+  });
+}
+
+export function listingRestoredEmail(
+  user: Person,
+  business: { name: string; slug: string },
+  siteUrl: string,
+) {
+  return render({
+    to: user.email,
+    subject: `${business.name} is visible again`,
+    greeting: `Muraho ${user.name},`,
+    paragraphs: [
+      `${business.name} is back on BizConnect Rwanda, and you can edit it again from your dashboard.`,
+    ],
+    action: { label: "See your listing", url: listingUrl(business.slug, siteUrl) },
+    closing: "Thank you for your patience.",
+  });
+}
+
+export function claimApprovedEmail(user: Person, businessName: string, siteUrl: string) {
+  return render({
+    to: user.email,
+    subject: `You now manage ${businessName}`,
+    greeting: `Muraho ${user.name},`,
+    paragraphs: [
+      `Your request was approved: ${businessName} is now in your dashboard.`,
+      "Check the hours, photos, prices and contact details, so customers see what's true today.",
+    ],
+    action: { label: "Open your dashboard", url: dashboardUrl(siteUrl) },
+    closing: "Thank you for keeping your listing up to date.",
+  });
+}
+
+export function claimRejectedEmail(
+  user: Person,
+  businessName: string,
+  note: string,
+  siteUrl: string,
+) {
+  return render({
+    to: user.email,
+    subject: `About your request to manage ${businessName}`,
+    greeting: `Muraho ${user.name},`,
+    paragraphs: [
+      `We couldn't approve your request to manage ${businessName}. The admin wrote:`,
+      note,
+      "You can send a new request with more details or proof from the listing's page.",
+    ],
+    action: { label: "Open your dashboard", url: dashboardUrl(siteUrl) },
+    closing: "Thank you for understanding.",
+  });
+}
+
 export function existingAccountEmail(user: { email: string; name: string }, siteUrl: string) {
   return render({
     to: user.email,

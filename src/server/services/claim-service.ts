@@ -5,7 +5,7 @@ import { env } from "@/config/env";
 import { fail, ok, type ServiceResult } from "@/lib/form-state";
 import { claimSchema, fieldErrors } from "@/lib/listing-rules";
 import { ImageRejectedError, processEvidence } from "@/server/images/process-image";
-import { sendEmailInBackground } from "@/server/mail/mailer";
+import { queueEmail } from "@/server/mail/mailer";
 import { claimReceivedEmail } from "@/server/mail/templates";
 import {
   countPendingClaimsByUser,
@@ -114,7 +114,7 @@ export async function submitClaim(
     if (evidenceKey) await storage.delete([evidenceKey]);
     throw error;
   }
-  sendEmailInBackground(claimReceivedEmail(user, business.name, env.NEXT_PUBLIC_SITE_URL));
+  await queueEmail(claimReceivedEmail(user, business.name, env.NEXT_PUBLIC_SITE_URL));
   return ok(undefined);
 }
 

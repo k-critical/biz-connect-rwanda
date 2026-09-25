@@ -28,7 +28,7 @@ import {
   IMAGE_REJECTION_MESSAGES,
   processPhoto,
 } from "@/server/images/process-image";
-import { sendEmailInBackground } from "@/server/mail/mailer";
+import { queueEmail } from "@/server/mail/mailer";
 import { listingSubmittedEmail } from "@/server/mail/templates";
 import { listClaimsByUser } from "@/server/repositories/claim-repository";
 import {
@@ -342,7 +342,7 @@ export async function submitForReview(
     });
   }
   await setBusinessStatus(business.id, "PENDING", { submittedAt: new Date() });
-  sendEmailInBackground(listingSubmittedEmail(owner, business.name, env.NEXT_PUBLIC_SITE_URL));
+  await queueEmail(listingSubmittedEmail(owner, business.name, env.NEXT_PUBLIC_SITE_URL));
   return ok(undefined);
 }
 

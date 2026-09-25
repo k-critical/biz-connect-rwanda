@@ -8,7 +8,7 @@ vi.mock("@/server/mail/mailer", () => ({
   sendEmail: async (message: EmailMessage) => {
     outbox.push(message);
   },
-  sendEmailInBackground: (message: EmailMessage) => {
+  queueEmail: async (message: EmailMessage) => {
     outbox.push(message);
   },
 }));

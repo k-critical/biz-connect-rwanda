@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ExternalLink, MapPin, Tag } from "lucide-react";
+import { ExternalLink, Flag, MapPin, Tag } from "lucide-react";
 import type { BusinessProfileData } from "@/server/services/directory-service";
 import type { BusinessCardData } from "@/components/business/business-card";
 import { cn } from "@/lib/cn";
@@ -208,6 +208,14 @@ export function BusinessProfileView({
                 Claim this listing
               </Link>
             </div>
+          )}
+          {!preview && (
+            <Link
+              href={`/b/${b.slug}/report`}
+              className="inline-flex items-center gap-1.5 self-start px-1 text-sm text-ink-muted hover:text-ink hover:underline"
+            >
+              <Flag className="size-4" aria-hidden /> Report wrong or harmful information
+            </Link>
           )}
         </aside>
       </div>
